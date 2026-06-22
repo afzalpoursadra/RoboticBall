@@ -20,15 +20,15 @@ The project was developed as a multidisciplinary engineering project involving:
 
 ## Assembly Animation
 
-<img src="media/Assembly_motion.gif" width="700"/>
+<img src="media/Assembly_motion.gif" width="500"/>
 
 ---
 
 
 ### Final Assembly
 
-<img src="media/real_image1.jpg" width="700"/> 
-<img src="media/real_image2.jpg" width="700"/> 
+<img src="media/real_image1.jpg" width="500"/> 
+<img src="media/real_image2.jpg" width="500"/> 
 
 ---
 ## Assembly tips
