@@ -34,6 +34,7 @@ The project was developed as a multidisciplinary engineering project involving:
 ## Assembly tips
 
 Parts such as the cap and motor holder should be glued together using adhesive.
+
 To charge the batteries, the 2S BMS should be externally attached to the main body.
 
 then be Happy
