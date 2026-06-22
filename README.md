@@ -38,58 +38,6 @@ To charge the batteries, the 2S BMS should be externally attached to the main bo
 
 then be Happy
 
-## Project Structure
-
-robotic-ball/
-│
-├── app/
-├── firmware/
-├── hardware/
-├── mechanical/
-│
-├── LICENSE
-└── README.md
-
----
-
-## Hardware
-
-The hardware section contains:
-
-* PCB Design Files
-* Schematic Sheets
-* Bill Of Materials (BOM)
-
----
-
-## Mechanical Design
-
-The mechanical section contains:
-
-* SolidWorks source files
-* STL files
-* Assembly models
-
----
-
-## Firmware
-
-Arduino firmware responsible for:
-
-* Motor control
-* Communication handling
-* Device management
-
----
-
-## Mobile Application
-
-The mobile application provides:
-
-* Remote control
-* User interface
-* Wireless connection management
-
 ---
 
 ## License
