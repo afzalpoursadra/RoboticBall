@@ -1,0 +1,27 @@
+Esp8266_01                      1x
+
+Type of TTL like "CP2102"       1x
+
+l293D IC                        1x
+
+Cap 10uf 25v 4mm                2x
+
+AMS1117-3.3 Smd                 1x 
+
+Bolt M3 10mm                    6x
+
+Nut M3                          2x
+
+DIP switch 1 position           1x
+
+Resistor 4.7k                   2x
+
+wire                           
+
+Header 2*4 used for ESP8266_01  1x
+
+BMS 2S                          1x
+
+Motor N20                       2x
+
+402030 Battery                  2x
