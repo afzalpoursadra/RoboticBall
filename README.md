@@ -1,6 +1,6 @@
 # Robotic Ball
 
-An open-source robotic ball platform developed by Dipico.
+An open-source robotic ball platform.
 
 ---
 
@@ -10,43 +10,36 @@ Robotic Ball is a compact robotics platform that integrates custom mechanical de
 
 The project was developed as a multidisciplinary engineering project involving:
 
+* Mobile Application Development
 * Mechanical Design
 * PCB Design
 * Embedded Programming
-* Mobile Application Development
 
 ---
 
-## Features
 
-* Custom-designed mechanical structure
-* Custom PCB
-* Arduino-based firmware
-* Mobile application control
-* Rechargeable battery system
-* Wireless communication
+## Assembly Animation
+
+<img src="media/Assembly_motion.gif" width="400"/>
 
 ---
 
-## System Architecture
 
-```text
-Mobile App
-     │
-Wireless Communication
-     │
-Arduino Controller
-     │
-Motor Driver
-     │
-DC Motors
-```
+### Final Assembly
+
+<img src="media/real_image1.jpg" width="400"/> 
+<img src="media/real_image2.jpg" width="400"/> 
 
 ---
+## Assembly tips
+
+Parts such as the cap and motor holder should be glued together using adhesive.
+To charge the batteries, the 2S BMS should be externally attached to the main body.
+
+then be Happy
 
 ## Project Structure
 
-```text
 robotic-ball/
 │
 ├── app/
@@ -56,7 +49,6 @@ robotic-ball/
 │
 ├── LICENSE
 └── README.md
-```
 
 ---
 
@@ -75,9 +67,8 @@ The hardware section contains:
 The mechanical section contains:
 
 * SolidWorks source files
-* STEP files
+* STL files
 * Assembly models
-* Rendered images
 
 ---
 
@@ -98,43 +89,6 @@ The mobile application provides:
 * Remote control
 * User interface
 * Wireless connection management
-
----
-
-## Assembly Animation
-
-An assembly animation demonstrating the complete assembly sequence of the robotic ball is available in the project documentation.
-
----
-
-## Gallery
-
-### Mechanical Design
-
-(Add renders here)
-
-### PCB
-
-(Add PCB images here)
-
-### Final Assembly
-
-(Add final product photos here)
-
----
-
-## Contributors
-
-### Dipico
-
-* Mechanical Design
-* PCB Design
-* Embedded Firmware
-* System Integration
-
-### Contributors
-
-* Mobile Application Development
 
 ---
 
