@@ -151,6 +151,9 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Reset generated Android project
+        run: rm -rf src-tauri/gen/android
+
       - name: Initialize Android project
         run: pnpm tauri android init --ci
 
