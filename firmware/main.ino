@@ -28,11 +28,42 @@ IPAddress ip(192, 168, 4, 1);
 IPAddress gateway(192, 168, 4, 1);
 IPAddress subnet(255, 255, 255, 0);
 
+// ===== PWM Config ===== //
+
+const int pwmRange = 255;
+const int pwmFrequency = 1000;
+const int defaultSpeed = 200;
+const int minSpeed = 0;
+const int maxSpeed = 255;
+const int turnInnerPercent = 15;
+
+// ===== Motion State ===== //
+
+int commandSpeed = defaultSpeed;
+
+int targetLeftPwm = 0;
+int targetRightPwm = 0;
+
+int currentLeftPwm = 0;
+int currentRightPwm = 0;
+
+const int rampStep = 12;
+const unsigned long rampInterval = 15;
+unsigned long lastRampTime = 0;
+
+const int joystickDeadZone = 12;
+
+unsigned long lastPrintTime = 0;
+const unsigned long printInterval = 120;
+
 void setup() {
   pinMode(left, OUTPUT);
   pinMode(right, OUTPUT);
 // digitalWrite(left, LOW);
 //digitalWrite(right, LOW);
+
+  analogWriteRange(pwmRange);
+  analogWriteFreq(pwmFrequency);
 
   stop_motors();
 
