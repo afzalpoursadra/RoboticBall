@@ -293,7 +293,7 @@ fn parse_pwm(ack: &str, status: &mut RobotStatus) {
     }
 }
 
-fn lock_runtime(state: &tauri::State<'_, AppState>) -> Result<std::sync::MutexGuard<'_, RobotRuntime>, String> {
+fn lock_runtime<'a>(state: &'a tauri::State<'a, AppState>) -> Result<std::sync::MutexGuard<'a, RobotRuntime>, String> {
     state.robot.lock().map_err(|_| "runtime_lock_failed".to_string())
 }
 

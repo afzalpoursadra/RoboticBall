@@ -1,10 +1,10 @@
 plugins {
-    `kotlin-dsl`
+    `java-gradle-plugin`
 }
 
 gradlePlugin {
     plugins {
-        create("pluginsForCoolKids") {
+        create("rust") {
             id = "rust"
             implementationClass = "RustPlugin"
         }
@@ -18,6 +18,6 @@ repositories {
 }
 
 dependencies {
-    compileOnly(gradleApi())
+    implementation(gradleApi())
     implementation("com.android.tools.build:gradle:8.11.0")
 }
