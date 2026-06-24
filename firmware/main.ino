@@ -89,45 +89,19 @@ void loop() {
 
   if (millis() - lastPacketTime > failsafeTimeout) {
     result = 0;
+    set_target_pwm(0, 0);
   }
 
-  Serial.println(result); 
+  update_motors();
 
-  switch(result){ 
-      case 0:
-      //get_data();
-          digitalWrite(left, LOW);
-          digitalWrite(right, LOW);
-        break;
-
-      case 1:
-      //get_data();
-          digitalWrite(left, HIGH);
-          digitalWrite(right, HIGH);
-        break; 
-
-      case 2:
-      //get_data();
-          digitalWrite(left, HIGH);
-          digitalWrite(right, HIGH);
-          delay(5);
-          digitalWrite(right, LOW);
-          delay(50);
-        break; 
-
-      case 3:
-      //get_data();
-          digitalWrite(right, HIGH);
-          digitalWrite(left, HIGH);
-          delay(5);
-          digitalWrite(left, LOW);
-          delay(50);
-        break;
-
-      default:
-          digitalWrite(left, LOW);
-          digitalWrite(right, LOW);
-        break;
+  if (millis() - lastPrintTime > printInterval) {
+    Serial.print("CMD: ");
+    Serial.print(result);
+    Serial.print(" | L: ");
+    Serial.print(currentLeftPwm);
+    Serial.print(" | R: ");
+    Serial.println(currentRightPwm);
+    lastPrintTime = millis();
   }
 }
 
@@ -151,8 +125,11 @@ void get_data(){
 
       if (ok) {
         lastPacketTime = millis();
+        send_ack("OK");
       } else {
         result = 0;
+        set_target_pwm(0, 0);
+        send_ack("ERR");
       }
     }
 }
@@ -186,6 +163,7 @@ bool parse_packet(char *packet) {
 
   result = cmd;
   commandSpeed = speed;
+  apply_command(result, commandSpeed);
 
   return true;
 }
@@ -216,25 +194,144 @@ bool parse_joystick_packet() {
   return true;
 }
 
+void apply_command(int cmd, int speed) {
+  switch(cmd){ 
+      case 0:
+      //get_data();
+          set_target_pwm(0, 0);
+        break;
+
+      case 1:
+      //get_data();
+          set_target_pwm(speed, speed);
+        break; 
+
+      case 2:
+      //get_data();
+          set_soft_turn_left(speed);
+        break; 
+
+      case 3:
+      //get_data();
+          set_soft_turn_right(speed);
+        break;
+
+      default:
+          set_target_pwm(0, 0);
+        break;
+  }
+}
+
 void apply_joystick(int throttle, int steer, int speedLimit) {
   if (abs(throttle) < joystickDeadZone && abs(steer) < joystickDeadZone) {
     result = 0;
+    set_target_pwm(0, 0);
     return;
   }
 
   if (throttle < -joystickDeadZone) {
     result = 0;
+    set_target_pwm(0, 0);
     return;
+  }
+
+  int limitedMax = map(speedLimit, 0, 100, 0, maxSpeed);
+  int speed = map(abs(throttle), 0, 100, 0, limitedMax);
+
+  speed = constrain(speed, minSpeed, maxSpeed);
+
+  if (speed == 0 && abs(steer) >= joystickDeadZone) {
+    speed = map(abs(steer), 0, 100, 0, limitedMax);
   }
 
   if (abs(steer) < joystickDeadZone) {
     result = 1;
+    set_target_pwm(speed, speed);
     return;
   }
 
+  int steerAmount = constrain(abs(steer), 0, 100);
+  int innerPwm = map(steerAmount, 0, 100, speed, get_turn_inner_pwm(speed));
+
   if (steer < 0) {
     result = 2;
+    set_target_pwm(speed, innerPwm);
   } else {
     result = 3;
+    set_target_pwm(innerPwm, speed);
   }
+}
+
+void set_soft_turn_left(int speed) {
+  int innerPwm = get_turn_inner_pwm(speed);
+  set_target_pwm(speed, innerPwm);
+}
+
+void set_soft_turn_right(int speed) {
+  int innerPwm = get_turn_inner_pwm(speed);
+  set_target_pwm(innerPwm, speed);
+}
+
+int get_turn_inner_pwm(int speed) {
+  int innerPwm = (speed * turnInnerPercent) / 100;
+  return constrain(innerPwm, 0, speed);
+}
+
+void set_target_pwm(int leftPwm, int rightPwm) {
+  targetLeftPwm = constrain(leftPwm, minSpeed, maxSpeed);
+  targetRightPwm = constrain(rightPwm, minSpeed, maxSpeed);
+}
+
+void update_motors() {
+  if (millis() - lastRampTime < rampInterval) {
+    return;
+  }
+
+  currentLeftPwm = ramp_value(currentLeftPwm, targetLeftPwm);
+  currentRightPwm = ramp_value(currentRightPwm, targetRightPwm);
+
+  analogWrite(left, currentLeftPwm);
+  analogWrite(right, currentRightPwm);
+
+  lastRampTime = millis();
+}
+
+int ramp_value(int currentValue, int targetValue) {
+  if (currentValue < targetValue) {
+    currentValue += rampStep;
+
+    if (currentValue > targetValue) {
+      currentValue = targetValue;
+    }
+  } else if (currentValue > targetValue) {
+    currentValue -= rampStep;
+
+    if (currentValue < targetValue) {
+      currentValue = targetValue;
+    }
+  }
+
+  return currentValue;
+}
+
+void send_ack(const char *message) {
+  udp.beginPacket(udp.remoteIP(), udp.remotePort());
+  udp.print(message);
+  udp.print(":");
+  udp.print(result);
+  udp.print(":");
+  udp.print(currentLeftPwm);
+  udp.print(":");
+  udp.print(currentRightPwm);
+  udp.endPacket();
+}
+
+void stop_motors() {
+  targetLeftPwm = 0;
+  targetRightPwm = 0;
+  currentLeftPwm = 0;
+  currentRightPwm = 0;
+
+  analogWrite(left, 0);
+  analogWrite(right, 0);
 }
