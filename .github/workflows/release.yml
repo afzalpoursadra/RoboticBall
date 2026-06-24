@@ -1,0 +1,218 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release tag to publish, for example v0.2.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+  NODE_VERSION: 24
+  PNPM_VERSION: 10.28.2
+
+jobs:
+  desktop:
+    name: Desktop ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            bundle_args: --bundles dmg
+            artifact_name: macos
+          - os: windows-latest
+            bundle_args: --bundles nsis
+            artifact_name: windows
+          - os: ubuntu-24.04
+            bundle_args: --bundles deb appimage rpm
+            artifact_name: linux
+    defaults:
+      run:
+        shell: bash
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: frontend/src-tauri
+
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-24.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libssl-dev \
+            libjavascriptcoregtk-4.1-dev \
+            libsoup-3.0-dev \
+            patchelf
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build desktop bundle
+        # TODO: add macOS signing and notarization when certificates are available.
+        # TODO: add Windows code signing when a certificate is available.
+        run: pnpm tauri build --ci --no-sign ${{ matrix.bundle_args }}
+
+      - name: Stage desktop release assets
+        run: |
+          mkdir -p release-assets/${{ matrix.artifact_name }}
+          find src-tauri/target/release/bundle -type f \
+            \( -name '*.dmg' -o -name '*.exe' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' -o -name '*.pkg.tar.zst' \) \
+            -exec cp {} release-assets/${{ matrix.artifact_name }}/ \;
+
+      - name: Upload desktop artifact bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: frontend/release-assets/${{ matrix.artifact_name }}
+          if-no-files-found: error
+
+  android:
+    name: Android release
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        shell: bash
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: frontend/src-tauri
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android packages
+        run: |
+          yes | sdkmanager --licenses
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0" \
+            "ndk;27.0.12077973"
+
+      - name: Install frontend dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build universal APK
+        # TODO: add Android keystore signing once release secrets are available.
+        run: pnpm tauri android build --apk --target aarch64 armv7 --ci
+
+      - name: Build split APKs
+        # TODO: add Android keystore signing once release secrets are available.
+        run: |
+          pnpm tauri android build --apk --split-per-abi --target aarch64 armv7 i686 x86_64 --ci -- \
+            -PabiList=arm64-v8a,armeabi-v7a,x86,x86_64 \
+            -ParchList=arm64,arm,x86,x86_64 \
+            -PtargetList=aarch64,armv7,i686,x86_64
+
+      - name: Stage Android release assets
+        run: |
+          mkdir -p release-assets/android
+          find src-tauri/gen/android/app/build/outputs -type f -name '*.apk' -exec cp {} release-assets/android/ \;
+
+      - name: Upload Android artifact bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: frontend/release-assets/android
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    runs-on: ubuntu-24.04
+    needs:
+      - desktop
+      - android
+    steps:
+      - name: Resolve release tag
+        id: tag
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "tag_name=$TAG_INPUT" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag_name=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          TAG_INPUT: ${{ inputs.tag_name }}
+
+      - name: Download release assets
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+
+      - name: Create or update draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag_name }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ steps.tag.outputs.tag_name }}
+          draft: true
+          generate_release_notes: true
+          fail_on_unmatched_files: false
+          files: release-assets/**/*
