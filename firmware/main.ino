@@ -10,7 +10,7 @@ const char *ssidSTA = "botball";
 const char *passwordSTA = "01020304";
 
 WiFiUDP udp;
-const char *udpAddress = "192.168.1.1"; 
+const char *udpAddress = "192.168.4.1"; 
 const int udpPort = 4210;
 char incomingPacket[255];
 
@@ -18,17 +18,19 @@ int input_switch = 3;
 int i = 0;
 int result_data = 0;
 int result = 0;
+
+IPAddress ip(192, 168, 4, 1);
+IPAddress gateway(192, 168, 4, 1);
+IPAddress subnet(255, 255, 255, 0);
+
 void setup() {
   pinMode(left, OUTPUT);
   pinMode(right, OUTPUT);
 // digitalWrite(left, LOW);
 //digitalWrite(right, LOW);
   Serial.begin(115200); 
-  IPAddress ip;
-  IPAddress gateway;
-  IPAddress subnet;
 
-
+  WiFi.mode(WIFI_AP);
   WiFi.softAPConfig(ip, gateway, subnet);
   //WiFi.softAPConfig(udpAddress, gateway, subnet);
   WiFi.softAP(ssidSTA, passwordSTA);
