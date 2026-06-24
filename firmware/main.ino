@@ -145,30 +145,96 @@ void get_data(){
 
       Serial.printf("Received packet: %s\n", incomingPacket); 
 
-      int cmd = atoi(incomingPacket);
+      // ===== Command Parser ===== //
 
-      // ===== Command Validation ===== //
+      bool ok = parse_packet(incomingPacket);
 
-      if (cmd >= 0 && cmd <= 3) {
-        result = cmd;
+      if (ok) {
         lastPacketTime = millis();
-        send_ack("OK");
       } else {
         result = 0;
-        send_ack("ERR");
       }
     }
 }
 
-void send_ack(const char *message) {
-  udp.beginPacket(udp.remoteIP(), udp.remotePort());
-  udp.print(message);
-  udp.print(":");
-  udp.print(result);
-  udp.endPacket();
+bool parse_packet(char *packet) {
+  char *first = strtok(packet, ",");
+
+  if (first == NULL) {
+    return false;
+  }
+
+  if (strcmp(first, "J") == 0 || strcmp(first, "j") == 0) {
+    return parse_joystick_packet();
+  }
+
+  int cmd = atoi(first);
+
+  char *speedToken = strtok(NULL, ",");
+
+  int speed = defaultSpeed;
+
+  if (speedToken != NULL) {
+    speed = atoi(speedToken);
+  }
+
+  speed = constrain(speed, minSpeed, maxSpeed);
+
+  if (cmd < 0 || cmd > 3) {
+    return false;
+  }
+
+  result = cmd;
+  commandSpeed = speed;
+
+  return true;
 }
 
-void stop_motors() {
-  digitalWrite(left, LOW);
-  digitalWrite(right, LOW);
+bool parse_joystick_packet() {
+  char *throttleToken = strtok(NULL, ",");
+  char *steerToken = strtok(NULL, ",");
+  char *limitToken = strtok(NULL, ",");
+
+  if (throttleToken == NULL || steerToken == NULL) {
+    return false;
+  }
+
+  int throttle = atoi(throttleToken);
+  int steer = atoi(steerToken);
+  int speedLimit = 100;
+
+  if (limitToken != NULL) {
+    speedLimit = atoi(limitToken);
+  }
+
+  throttle = constrain(throttle, -100, 100);
+  steer = constrain(steer, -100, 100);
+  speedLimit = constrain(speedLimit, 0, 100);
+
+  apply_joystick(throttle, steer, speedLimit);
+
+  return true;
+}
+
+void apply_joystick(int throttle, int steer, int speedLimit) {
+  if (abs(throttle) < joystickDeadZone && abs(steer) < joystickDeadZone) {
+    result = 0;
+    return;
+  }
+
+  if (throttle < -joystickDeadZone) {
+    result = 0;
+    return;
+  }
+
+  if (abs(steer) < joystickDeadZone) {
+    result = 1;
+    return;
+  }
+
+  if (steer < 0) {
+    result = 2;
+  } else {
+    result = 3;
+  }
 }
