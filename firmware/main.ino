@@ -34,6 +34,8 @@ void setup() {
 // digitalWrite(left, LOW);
 //digitalWrite(right, LOW);
 
+  stop_motors();
+
   Serial.begin(115200); 
 
   WiFi.mode(WIFI_AP);
@@ -102,6 +104,7 @@ void get_data(){
     incomingPacket[0] = '\0';
 
     int packetSize = udp.parsePacket(); 
+
     if (packetSize) {
       int len = udp.read(incomingPacket, sizeof(incomingPacket) - 1);
 
@@ -132,4 +135,9 @@ void send_ack(const char *message) {
   udp.print(":");
   udp.print(result);
   udp.endPacket();
+}
+
+void stop_motors() {
+  digitalWrite(left, LOW);
+  digitalWrite(right, LOW);
 }
