@@ -7,6 +7,7 @@ An open-source robotic ball platform.
 ## Overview
 
 Robotic Ball is a compact robotics platform that integrates custom mechanical design, embedded electronics, firmware, and a mobile application.
+The repository also includes the Gyrobit control UI and release workflow for desktop and Android builds.
 
 The project was developed as a multidisciplinary engineering project involving:
 
@@ -24,6 +25,13 @@ The project was developed as a multidisciplinary engineering project involving:
 
 ---
 
+## Control UI
+
+<img src="frontend/docs/screenshots/mobile-control.png" width="300"/>
+<img src="frontend/docs/screenshots/desktop-dashboard.png" width="500"/>
+
+---
+
 
 ### Final Assembly
 
@@ -37,7 +45,7 @@ Parts such as the cap and motor holder should be glued together using adhesive.
 
 To charge the batteries, the 2S BMS should be externally attached to the main body.
 
-then be Happy
+Then you're ready to go.
 
 ---
 
