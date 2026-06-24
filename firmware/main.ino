@@ -24,7 +24,6 @@ const unsigned long failsafeTimeout = 500;
 
 // ===== Network Config ===== //
 
-
 IPAddress ip(192, 168, 4, 1);
 IPAddress gateway(192, 168, 4, 1);
 IPAddress subnet(255, 255, 255, 0);
@@ -34,15 +33,18 @@ void setup() {
   pinMode(right, OUTPUT);
 // digitalWrite(left, LOW);
 //digitalWrite(right, LOW);
+
   Serial.begin(115200); 
 
   WiFi.mode(WIFI_AP);
   WiFi.softAPConfig(ip, gateway, subnet);
   //WiFi.softAPConfig(udpAddress, gateway, subnet);
   WiFi.softAP(ssidSTA, passwordSTA);
+
   Serial.println("Access Point started");
   Serial.print("IP address: ");
   Serial.println(WiFi.softAPIP()); 
+
   udp.begin(udpPort);
 
   lastPacketTime = millis();
@@ -55,47 +57,79 @@ void loop() {
   if (millis() - lastPacketTime > failsafeTimeout) {
     result = 0;
   }
+
   Serial.println(result); 
+
   switch(result){ 
       case 0:
       //get_data();
           digitalWrite(left, LOW);
           digitalWrite(right, LOW);
         break;
+
       case 1:
       //get_data();
           digitalWrite(left, HIGH);
           digitalWrite(right, HIGH);
         break; 
+
       case 2:
       //get_data();
           digitalWrite(left, HIGH);
-            digitalWrite(right, HIGH);
-            delay(5);
-            digitalWrite(right, LOW);
-            delay(50);
+          digitalWrite(right, HIGH);
+          delay(5);
+          digitalWrite(right, LOW);
+          delay(50);
         break; 
+
       case 3:
       //get_data();
           digitalWrite(right, HIGH);
-            digitalWrite(left, HIGH);
-            delay(5);
-            digitalWrite(left, LOW);
-            delay(50);
+          digitalWrite(left, HIGH);
+          delay(5);
+          digitalWrite(left, LOW);
+          delay(50);
         break;
-        
+
+      default:
+          digitalWrite(left, LOW);
+          digitalWrite(right, LOW);
+        break;
   }
 }
+
 void get_data(){
     incomingPacket[0] = '\0';
 
     int packetSize = udp.parsePacket(); 
     if (packetSize) {
-    int len = udp.read(incomingPacket, 255);
-    if (len > 0) {
-      incomingPacket[len] = 0;
+      int len = udp.read(incomingPacket, sizeof(incomingPacket) - 1);
+
+      if (len > 0) {
+        incomingPacket[len] = 0;
+      }
+
+      Serial.printf("Received packet: %s\n", incomingPacket); 
+
+      int cmd = atoi(incomingPacket);
+
+      // ===== Command Validation ===== //
+
+      if (cmd >= 0 && cmd <= 3) {
+        result = cmd;
+        lastPacketTime = millis();
+        send_ack("OK");
+      } else {
+        result = 0;
+        send_ack("ERR");
+      }
     }
-    Serial.printf("Received packet: %s", incomingPacket); 
-    result = atoi(incomingPacket);
-  }
+}
+
+void send_ack(const char *message) {
+  udp.beginPacket(udp.remoteIP(), udp.remotePort());
+  udp.print(message);
+  udp.print(":");
+  udp.print(result);
+  udp.endPacket();
 }
