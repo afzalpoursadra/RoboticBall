@@ -19,6 +19,12 @@ int i = 0;
 int result_data = 0;
 int result = 0;
 
+unsigned long lastPacketTime = 0;
+const unsigned long failsafeTimeout = 500;
+
+// ===== Network Config ===== //
+
+
 IPAddress ip(192, 168, 4, 1);
 IPAddress gateway(192, 168, 4, 1);
 IPAddress subnet(255, 255, 255, 0);
@@ -38,11 +44,17 @@ void setup() {
   Serial.print("IP address: ");
   Serial.println(WiFi.softAPIP()); 
   udp.begin(udpPort);
+
+  lastPacketTime = millis();
 }
 
 // the loop function runs over and over again forever
 void loop() {
   get_data();
+
+  if (millis() - lastPacketTime > failsafeTimeout) {
+    result = 0;
+  }
   Serial.println(result); 
   switch(result){ 
       case 0:
