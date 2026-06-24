@@ -152,14 +152,10 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build universal APK
-        run: pnpm tauri android build --apk --target aarch64 armv7 --ci
+        run: pnpm tauri android build --apk --ci
 
       - name: Build split APKs
-        run: |
-          pnpm tauri android build --apk --split-per-abi --target aarch64 armv7 i686 x86_64 --ci -- \
-            -PabiList=arm64-v8a,armeabi-v7a,x86,x86_64 \
-            -ParchList=arm64,arm,x86,x86_64 \
-            -PtargetList=aarch64,armv7,i686,x86_64
+        run: pnpm tauri android build --apk --split-per-abi --ci
 
       - name: Stage Android release assets
         run: |
