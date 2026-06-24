@@ -24,6 +24,13 @@ The project was developed as a multidisciplinary engineering project involving:
 
 ---
 
+## Control UI
+
+<img src="frontend/docs/screenshots/mobile-control.png" width="300"/>
+<img src="frontend/docs/screenshots/desktop-dashboard.png" width="500"/>
+
+---
+
 
 ### Final Assembly
 
